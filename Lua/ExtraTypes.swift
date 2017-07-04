@@ -68,3 +68,25 @@ extension Arguments {
     public var size:  CGSize  { return (values.remove(at: 0) as! Table).toSize()!  }
     
 }
+
+
+extension IndexPath: Value {
+
+    public func kind() -> Kind { return .table }
+
+    public func push(_ vm: VirtualMachine) {
+        let t = vm.createTable()
+        t["section"] = Double(self.section)
+        t["row"] = Double(self.row)
+        t.push(vm)
+    }
+
+    fileprivate static let typeName: String = "index path (table with numeric keys section,row)"
+    public static func arg(_ vm: VirtualMachine, value: Value) -> String? {
+        if value.kind() != .table { return typeName }
+        if let result = Table.arg(vm, value: value) { return result }
+        let t = value as! Table
+        if !(t["section"] is Number) || !(t["row"] is Number) { return typeName }
+        return nil
+    }
+}

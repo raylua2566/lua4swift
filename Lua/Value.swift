@@ -8,7 +8,7 @@ public protocol Value {
 open class StoredValue: Value, Equatable {
     
     fileprivate let registryLocation: Int
-    internal unowned var vm: VirtualMachine
+    internal weak var vm: VirtualMachine!
     
     internal init(_ vm: VirtualMachine) {
         self.vm = vm
@@ -17,9 +17,16 @@ open class StoredValue: Value, Equatable {
     }
     
     deinit {
-        vm.unref(RegistryIndex, registryLocation)
+        vm?.unref(RegistryIndex, registryLocation)
     }
-    
+
+    public var length: Int {
+        push(vm)
+        let len = vm.len(-1)
+        vm.pop()
+        return len
+    }
+
     open func push(_ vm: VirtualMachine) {
         vm.rawGet(tablePosition: RegistryIndex, index: registryLocation)
     }

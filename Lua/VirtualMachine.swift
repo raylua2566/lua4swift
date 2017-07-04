@@ -49,6 +49,7 @@ open class VirtualMachine {
     
     public init(openLibs: Bool = true) {
         if openLibs { luaL_openlibs(vm) }
+        
     }
     
     deinit {
@@ -261,9 +262,9 @@ open class VirtualMachine {
         let gc = lib.gc
         lib["__gc"] = createFunction([CustomType<T>.arg]) { args in
             let ud = args.userdata
-            (ud.userdataPointer() as UnsafeMutablePointer<T>).deinitialize()
-            let o: T = ud.toCustomType()
-            gc?(o)
+            let unsafeInstance = ud.userdataPointer() as UnsafeMutablePointer<T>
+            gc?(unsafeInstance.pointee)
+            unsafeInstance.deinitialize()
             return .nothing
         }
         
@@ -291,6 +292,8 @@ open class VirtualMachine {
     internal func unref(_ table: Int, _ position: Int) { luaL_unref(vm, Int32(table), Int32(position)) }
     internal func absolutePosition(_ position: Int) -> Int { return Int(lua_absindex(vm, Int32(position))) }
     internal func rawGet(tablePosition: Int, index: Int) { lua_rawgeti(vm, Int32(tablePosition), lua_Integer(index)) }
+
+    internal func len(_ position: Int) -> Int { return Int(luaL_len(vm, Int32(position))) }
     
     internal func pushFromStack(_ position: Int) {
         lua_pushvalue(vm, Int32(position))

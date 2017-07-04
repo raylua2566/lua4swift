@@ -50,8 +50,8 @@ open class Function: StoredValue {
 public typealias TypeChecker = (VirtualMachine, Value) -> String?
 
 public enum SwiftReturnValue {
-    case value(Lua.Value?)
-    case values([Lua.Value])
+    case value(Value?)
+    case values([Value])
     case nothing // convenience for Values([])
     case error(String)
 }

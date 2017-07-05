@@ -1,19 +1,20 @@
 
 open class Userdata: StoredValue {
     
-    open func userdataPointer<T>() -> UnsafeMutablePointer<T> {
+    open func userdataPointer<T>() -> UnsafeMutablePointer<T>? {
+        guard let vm = self.vm else { return nil }
         push(vm)
         let ptr = lua_touserdata(vm.vm, -1)
         vm.pop()
-        return (ptr?.assumingMemoryBound(to: T.self))!
+        return ptr?.assumingMemoryBound(to: T.self)
     }
 
-    open func toCustomType<T: CustomTypeInstance>() -> T {
-        return userdataPointer().pointee
+    open func toCustomType<T: CustomTypeInstance>() -> T? {
+        return userdataPointer()?.pointee
     }
     
-    open func toAny() -> Any {
-        return userdataPointer().pointee
+    open func toAny() -> Any? {
+        return userdataPointer()?.pointee
     }
     
     override open func kind() -> Kind { return .userdata }
@@ -47,7 +48,7 @@ open class CustomType<T: CustomTypeInstance>: Table {
         return nil
     }
     
-    override internal init(_ vm: VirtualMachine) {
+    override internal init(_ vm: VirtualMachine?) {
         super.init(vm)
     }
     
@@ -55,11 +56,17 @@ open class CustomType<T: CustomTypeInstance>: Table {
     open var eq: ((T, T) -> Bool)?
     
     public func createMethod(_ typeCheckers: [TypeChecker], _ fn: @escaping (T, Arguments) -> SwiftReturnValue) -> Function {
+        guard let vm = self.vm else {
+            return Function.`nil`
+        }
         var typeCheckers = typeCheckers
         typeCheckers.insert(CustomType<T>.arg, at: 0)
         return vm.createFunction(typeCheckers) { (args: Arguments) in
-            let o: T = args.customType()
-            return fn(o, args)
+            if let o: T = args.customType() {
+                return fn(o, args)
+            } else {
+                return .error("VM was released")
+            }
         }
     }
     

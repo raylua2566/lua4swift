@@ -262,17 +262,24 @@ open class VirtualMachine {
         let gc = lib.gc
         lib["__gc"] = createFunction([CustomType<T>.arg]) { args in
             let ud = args.userdata
-            let unsafeInstance = ud.userdataPointer() as UnsafeMutablePointer<T>
-            gc?(unsafeInstance.pointee)
-            unsafeInstance.deinitialize()
+            let unsafeInstance: UnsafeMutablePointer<T>? = ud.userdataPointer()
+            if let unsafeInstance = unsafeInstance {
+                gc?(unsafeInstance.pointee)
+                unsafeInstance.deinitialize()
+            }
             return .nothing
         }
         
         if let eq = lib.eq {
             lib["__eq"] = createFunction([CustomType<T>.arg, CustomType<T>.arg]) { args in
-                let a: T = args.customType()
-                let b: T = args.customType()
-                return .value(eq(a, b))
+                if
+                    let a: T = args.customType(),
+                    let b: T = args.customType() {
+                    // begin code
+                    return .value(eq(a, b))
+                } else {
+                    return .error("VM is released")
+                }
             }
         }
         return lib

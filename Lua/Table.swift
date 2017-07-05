@@ -10,6 +10,7 @@ open class Table: StoredValue {
     
     open subscript(key: Value) -> Value {
         get {
+            guard let vm = self.vm else { return Nil() }
             push(vm)
             
             key.push(vm)
@@ -21,6 +22,7 @@ open class Table: StoredValue {
         }
         
         set {
+            guard let vm = self.vm else { return  }
             push(vm)
             
             key.push(vm)
@@ -32,6 +34,7 @@ open class Table: StoredValue {
     }
     
     open func keys() -> [Value] {
+        guard let vm = self.vm else { return [] }
         var k = [Value]()
         push(vm) // table
         lua_pushnil(vm.vm)
@@ -46,6 +49,7 @@ open class Table: StoredValue {
     }
     
     open func becomeMetatableFor(_ thing: Value) {
+        guard let vm = self.vm else { return  }
         thing.push(vm)
         self.push(vm)
         lua_setmetatable(vm.vm, -2)
@@ -92,11 +96,13 @@ open class Table: StoredValue {
     }
     
     func storeReference(_ v: Value) -> Int {
+        guard let vm = self.vm else { return 0 }
         v.push(vm)
         return vm.ref(RegistryIndex)
     }
     
     func removeReference(_ ref: Int) {
+        guard let vm = self.vm else { return  }
         vm.unref(RegistryIndex, ref)
     }
     

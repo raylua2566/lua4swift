@@ -4,6 +4,7 @@ open class Number: StoredValue, CustomDebugStringConvertible {
     override open func kind() -> Kind { return .number }
     
     open func toDouble() -> Double {
+        guard let vm = self.vm else { return 0 }
         push(vm)
         let v = lua_tonumberx(vm.vm, -1, nil)
         vm.pop()
@@ -11,6 +12,7 @@ open class Number: StoredValue, CustomDebugStringConvertible {
     }
     
     open func toInteger() -> Int64 {
+        guard let vm = self.vm else { return 0 }
         push(vm)
         let v = lua_tointegerx(vm.vm, -1, nil)
         vm.pop()
@@ -18,6 +20,7 @@ open class Number: StoredValue, CustomDebugStringConvertible {
     }
     
     open var debugDescription: String {
+        guard let vm = self.vm else { return "VM was released." }
         push(vm)
         let isInteger = lua_isinteger(vm.vm, -1) != 0
         vm.pop()

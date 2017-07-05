@@ -5,8 +5,11 @@ public enum FunctionResults {
 }
 
 open class Function: StoredValue {
+
+    public static let `nil`: Function = Function(nil)
     
     open func call(_ args: [Value]) -> FunctionResults {
+        guard let vm = self.vm else { return .error("VM was released.") }
         let debugTable = vm.globals["debug"] as! Table
         let messageHandler = debugTable["traceback"]
         
@@ -74,6 +77,6 @@ open class Arguments {
     open var integer: Int64 { return (values.remove(at: 0) as! Number).toInteger() }
     open var double: Double { return (values.remove(at: 0) as! Number).toDouble() }
     
-    open func customType<T: CustomTypeInstance>() -> T { return (values.remove(at: 0) as! Userdata).toCustomType() }
+    open func customType<T: CustomTypeInstance>() -> T? { return (values.remove(at: 0) as! Userdata).toCustomType() }
     
 }

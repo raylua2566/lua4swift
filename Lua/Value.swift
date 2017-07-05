@@ -8,12 +8,16 @@ public protocol Value {
 open class StoredValue: Value, Equatable {
     
     fileprivate let registryLocation: Int
-    internal weak var vm: VirtualMachine!
+    internal weak var vm: VirtualMachine?
     
-    internal init(_ vm: VirtualMachine) {
+    internal init(_ vm: VirtualMachine?) {
         self.vm = vm
-        vm.pushFromStack(-1)
-        registryLocation = vm.ref(RegistryIndex)
+        if let vm = self.vm {
+            vm.pushFromStack(-1)
+            registryLocation = vm.ref(RegistryIndex)
+        } else {
+            registryLocation = -1
+        }
     }
     
     deinit {
@@ -21,6 +25,7 @@ open class StoredValue: Value, Equatable {
     }
 
     public var length: Int {
+        guard let vm = self.vm else { return 0 }
         push(vm)
         let len = vm.len(-1)
         vm.pop()
@@ -42,12 +47,14 @@ open class StoredValue: Value, Equatable {
 }
 
 public func ==(lhs: StoredValue, rhs: StoredValue) -> Bool {
-    if lhs.vm.vm != rhs.vm.vm { return false }
+
+    guard let lhsVM = lhs.vm, let rhsVM = rhs.vm else { return  false }
+    if lhsVM.vm != rhsVM.vm { return false }
     
-    lhs.push(lhs.vm)
-    lhs.push(rhs.vm)
-    let result = lua_compare(lhs.vm.vm, -2, -1, LUA_OPEQ) == 1
-    lhs.vm.pop(2)
+    lhs.push(lhsVM)
+    lhs.push(rhsVM)
+    let result = lua_compare(lhsVM.vm, -2, -1, LUA_OPEQ) == 1
+    lhsVM.pop(2)
     
     return result
 }
